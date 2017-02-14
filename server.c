@@ -69,7 +69,7 @@ int main(void) {
   int clientLen;
   // for (;;) {
   clientLen = sizeof(clientAddr);
-  printf("Accepting a connection ...\n");
+  printf("Accepting a connection on port %d ...\n", PORT);
   int client_socket = accept(
     socket_desc, // input
     (struct sockaddr *) &clientAddr, // output
