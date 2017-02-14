@@ -19,7 +19,8 @@ void invertcase(char *str) {
       str[i] += 32;
     else if (ch >= 'a' && ch <= 'z')
       str[i] -= 32;
-    // 32 is the absolute distance between 'A' and 'a'
+    // 32 is the absolute distance between 'A' and 'a', we can just do 'a' - 'A'
+    // but that is not the way cool kids get stuff done
   }
 }
 
@@ -31,7 +32,7 @@ int main(void) {
     return EXIT_FAILURE;
   }
   // try reusing the socket with the same port when it says that address
-  // already in use
+  // is already in use when bind
   int yes = 1;
   if (setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
     perror("setsockopt");
@@ -43,12 +44,12 @@ int main(void) {
   addrport.sin_family = AF_INET;
   // htons - hostshort to network (little endian to big endian)
   addrport.sin_port = htons(PORT);
-  addrport.sin_addr.s_addr = htonl(INADDR_ANY);
+  addrport.sin_addr.s_addr = htonl(INADDR_ANY); // htonl = hostlong to network
   // assigning a name to a socket
   int bind_status = bind(
     socket_desc,
-    (struct sockaddr *) &addrport,
-    sizeof(addrport)
+    (struct sockaddr *) &addrport, // casting 'sockaddr_in' to 'sockaddr'
+    sizeof(addrport) // stupidity of C, it can't figure out the length on its own
   );
   if (bind_status == -1) {
     fprintf(stderr, "Error: Cannot bind a socket\n");
@@ -69,9 +70,9 @@ int main(void) {
   // for (;;) {
   clientLen = sizeof(clientAddr);
   int client_socket = accept(
-    socket_desc,
-    (struct sockaddr *) &clientAddr,
-    &clientLen
+    socket_desc, // input
+    (struct sockaddr *) &clientAddr, // output
+    &clientLen // input & output
   );
   if (client_socket == -1) {
     fprintf(stderr, "Error: Cannot accept a socket\n");
@@ -88,6 +89,7 @@ int main(void) {
     fprintf(stderr, "Error: Cannot receive using recv()\n");
     return EXIT_FAILURE;
   }
+  // ensure null-terminated string, otherwise it will print garbage below
   msgbuffer[msgsize] = 0;
   printf("Message received, bytes: %d\n", msgsize);
   printf("The message is \n\"%s\"\n", msgbuffer);
@@ -103,7 +105,7 @@ int main(void) {
         expected\n");
     return EXIT_FAILURE;
   }
-  printf("Sent back to the client.\n");
+  printf("The message is sent back to the client.\n");
 
   // close the socket and free the port
   int close_status = close(socket_desc);
