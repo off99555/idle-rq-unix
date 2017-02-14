@@ -69,6 +69,7 @@ int main(void) {
   int clientLen;
   // for (;;) {
   clientLen = sizeof(clientAddr);
+  printf("Accepting a connection ...\n");
   int client_socket = accept(
     socket_desc, // input
     (struct sockaddr *) &clientAddr, // output
@@ -94,7 +95,7 @@ int main(void) {
   printf("Message received, bytes: %d\n", msgsize);
   printf("The message is \n\"%s\"\n", msgbuffer);
 
-  // invert case
+  // invert case the entire buffer
   invertcase(msgbuffer);
   printf("The message after case inversion: \n\"%s\"\n", msgbuffer);
 
