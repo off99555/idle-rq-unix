@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define PORT 5104
-#define ADDRESS "127.0.0.1"
+#define ADDRESS "10.16.64.39"
 #define INFILENAME "input.txt"
 #define OUTFILENAME "result.txt"
 #define MAX_LINE_WIDTH 500
@@ -82,7 +82,7 @@ int main(void) {
     fprintf(stderr, "Error: Cannot write to a file\n");
     return EXIT_FAILURE;
   }
-  printf("File wrote: %s\n", OUTFILENAME);
+  printf("File recently wrote: %s\n", OUTFILENAME);
   if (fclose(file) == EOF) {
     fprintf(stderr, "Error: Cannot close the file after writing\n");
     return EXIT_FAILURE;
