@@ -3,4 +3,4 @@ all:
 	gcc client.c -o client
 
 clean:
-	$(RM) server client
+	$(RM) server client result_client.txt result_server.txt
