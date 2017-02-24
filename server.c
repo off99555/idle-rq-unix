@@ -9,6 +9,7 @@
 #define PORT 5104
 #define BUFSIZE 10000
 
+// invert case of every characters inside the string
 void invertcase(char *str) {
   size_t len = strlen(str);
   char ch;
@@ -48,8 +49,8 @@ int main(void) {
   // assigning a name to a socket
   int bind_status = bind(
     socket_desc,
-    (struct sockaddr *) &addrport, // casting 'sockaddr_in' to 'sockaddr'
-    sizeof(addrport) // stupidity of C, it can't figure out the length on its own
+    (struct sockaddr *) &addrport,
+    sizeof(addrport)
   );
   if (bind_status == -1) {
     fprintf(stderr, "Error: Cannot bind a socket\n");
