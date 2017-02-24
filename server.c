@@ -8,6 +8,7 @@
 
 #define PORT 5104
 #define BUFSIZE 10000
+#define OUTFILENAME "result_server.txt"
 
 // invert case of every characters inside the string
 void invertcase(char *str) {
@@ -99,6 +100,18 @@ int main(void) {
   // invert case the entire buffer
   invertcase(msgbuffer);
   printf("The message after case inversion: \n\"%s\"\n", msgbuffer);
+
+  // writing the result to a file
+  FILE *file = fopen(OUTFILENAME, "w");
+  if (fputs(msgbuffer, file) == EOF) {
+    fprintf(stderr, "Error: Cannot write to a file\n");
+    return EXIT_FAILURE;
+  }
+  printf("File recently wrote: %s\n", OUTFILENAME);
+  if (fclose(file) == EOF) {
+    fprintf(stderr, "Error: Cannot close the file after writing\n");
+    return EXIT_FAILURE;
+  }
 
   // send back to client
   int sent_bytes = send(client_socket, msgbuffer, msgsize, 0);

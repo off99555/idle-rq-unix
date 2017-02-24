@@ -7,9 +7,9 @@
 #include <string.h>
 
 #define PORT 5104
-#define ADDRESS "10.16.64.39"
+#define ADDRESS "127.0.0.1" // IP cil.informatics = 10.16.64.39
 #define INFILENAME "input.txt"
-#define OUTFILENAME "result.txt"
+#define OUTFILENAME "result_client.txt"
 #define MAX_LINE_WIDTH 500
 #define MAX_FILE_SIZE 10000
 
