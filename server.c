@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <ctype.h>
 
 #define PORT 5104
 #define BUFSIZE 10000
@@ -13,16 +14,11 @@
 // invert case of every characters inside the string
 void invertcase(char *str) {
   size_t len = strlen(str);
-  char ch;
   size_t i;
   for (i = 0; i < len; i++) {
-    ch = str[i];
-    if (ch >= 'A' && ch <= 'Z')
-      str[i] += 32;
-    else if (ch >= 'a' && ch <= 'z')
-      str[i] -= 32;
-    // 32 is the absolute distance between 'A' and 'a', we can just do 'a' - 'A'
-    // but that is not the way cool kids get stuff done
+    if (isalpha(str[i])) {
+      str[i] ^= 1 << 5;
+    }
   }
 }
 
