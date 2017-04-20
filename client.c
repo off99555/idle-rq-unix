@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include "idle-rq.h"
 
 #define PORT 5104
 #define ADDRESS "127.0.0.1" // IP cil.informatics = 10.16.64.39
@@ -58,14 +59,14 @@ int main(void) {
   printf("Connection established.\n");
 
   // communicate
+  printf("Sending Message: \n\"%s\"\n", content);
   int len = strlen(content);
-  int sent_bytes = send(socket_desc, content, len, 0);
+  int sent_bytes = mysend(socket_desc, content, len, 0);
   if (sent_bytes != len) {
     fprintf(stderr, "Error: send() sent a different number of bytes than\
         expected\n");
     return EXIT_FAILURE;
   }
-  printf("Message sent: \n\"%s\"\n", content);
 
   /* // receiving from the server */
   /* int msgsize = recv(socket_desc, content, MAX_FILE_SIZE, 0); */
