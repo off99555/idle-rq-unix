@@ -32,28 +32,25 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
 
 ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   // forever try to receive frames
-  // for each frame, if null break
-  // else if corrupted send NAK frame,
-  // else send ACK
+  // for each frame, if corrupted or not proper order send NAK frame,
+  // else send ACK and if last frame break
 
   // join packets from frames together into *buf
   return recv(sockfile, buf, len, flags);
 }
 
 // split data into packets then make frames containing them
-// 6th bit is seqNo, 7th bit is parity
+// 5th bit is last frame, 6th bit is seqNo, 7th bit is parity
 char *makeframes(char *buf, size_t len) {
   char *frames = (char*) malloc(len*2); // len*2 is rough size approximation
   int fNo = 0; // current frame number that we are filling bits into
   int bufindex = 0;
   int bufbit = 0; // current bit that we are dealing with
-  while (1) {
+  int done = 0;
+  while (!done) {
     frames[fNo] = 0;
-    if (buf[bufindex] == 0 || bufindex >= len) { // if run out of buf
-      return frames;
-    }
     int i;
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < 5; i++) {
       if (buf[bufindex] & (1 << bufbit)) {
         frames[fNo] |= 1 << i;
       }
@@ -62,16 +59,19 @@ char *makeframes(char *buf, size_t len) {
         bufbit = 0;
         bufindex++;
         if (buf[bufindex] == 0 || bufindex >= len) { // if run out of buf
+          frames[fNo] |= 1 << 5; // last frame indicator
+          done = 1;
           break; // go add header and leave unused bits blank
         }
       }
     }
-    // add seqNo bits
+
+    // add seqNo bit
     if (fNo % 2) { // if current frame sequence number is odd
       frames[fNo] |= 1 << 6; // turn on the seqNo bit
     }
 
-    // add parity bits
+    // add parity bit
     if (parity(frames[fNo])) {
       frames[fNo] |= 1 << 7;
     }
