@@ -65,7 +65,12 @@ char *makeframes(char *buf, size_t len) {
         }
       }
     }
-    // add header bits
+    // add seqNo bits
+    if (fNo % 2) { // if current frame sequence number is odd
+      frames[fNo] |= 1 << 6; // turn on the seqNo bit
+    }
+
+    // ad
     fNo++;
   }
   return frames;
