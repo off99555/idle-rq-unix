@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <ctype.h>
+#include "idle-rq.h"
 
 #define PORT 5104
 #define BUFSIZE 10000
@@ -83,7 +84,7 @@ int main(void) {
   // communicate
   int bufsize = BUFSIZE;
   char msgbuffer[bufsize];
-  int msgsize = recv(client_socket, msgbuffer, bufsize, 0);
+  int msgsize = myrecv(client_socket, msgbuffer, bufsize, 0);
   if (msgsize == -1 ) {
     fprintf(stderr, "Error: Cannot receive using recv()\n");
     return EXIT_FAILURE;

@@ -6,9 +6,7 @@
 // premature timeout problem, but we want to mimic link layer.
 // idle RQ does not work if premature timeout problem is found
 
-/* void mightsend(int sockfile, const void *buf, size_t len); */
-
 // corrupt a frame, 6th bit is for seqNo, 7th bit is for parity
 char corrupt(char frame);
-
+void mightsend(int sockfile, char frame);
 void printbits(char frame);
