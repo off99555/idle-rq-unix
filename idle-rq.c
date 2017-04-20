@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "idle-rq.h"
 #include "trouble-maker.h"
 
@@ -10,24 +11,25 @@ int parity(char frame);
 
 ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
   char *tmp = (char*)buf;
-  printf("Buf:\n");
-  while (*tmp) {
-    printbits(*tmp);
-    tmp++;
-  }
-  char *frames = makeframes((char*)buf, len);
-  tmp = frames;
-  printf("Frames:\n");
+  printf("Buf (%zu):\n", len);
   while (*tmp) {
     printbits(*tmp);
     tmp++;
   }
   // make frames
+  char *frames = makeframes((char*)buf, len);
   // for each frame, send to secondary, set a timer to resend I(N)
   // and wait for secondary to
   // send a frame back, test for ACK/NAK, if it's ACK(N) and not corrupted,
   // send next frame(N+1) else send current frame again
-  return send(sockfile, buf, len, flags);
+  size_t n = strlen(frames);
+  printf("Frames (%zu):\n", n);
+  int i;
+  for (i = 0; i < n; i++) {
+    printbits(frames[i]);
+    mightsend(sockfile, frames[i]);
+  }
+  return len;
 }
 
 ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
