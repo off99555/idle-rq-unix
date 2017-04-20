@@ -1,0 +1,4 @@
+server serves as secondary AKA receiver
+client serves as primary AKA sender
+
+but you need to run the server first!
