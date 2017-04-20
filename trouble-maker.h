@@ -10,3 +10,5 @@
 
 // corrupt a frame, 6th bit is for seqNo, 7th bit is for parity
 char corrupt(char frame);
+
+void printbits(char frame);
