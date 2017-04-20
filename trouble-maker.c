@@ -19,4 +19,5 @@ void printbits(char frame) {
     bool on = frame & (1 << i);
     printf("%d", on);
   }
+  printf("\n");
 }
