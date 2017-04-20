@@ -25,9 +25,9 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
   size_t n = strlen(frames);
   printf("Frames (%zu):\n", n);
   int i;
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < 999999; i++) {
     printbits(frames[i]);
-    mightsend(sockfile, frames[i]);
+    mightsend(sockfile, 'x');
   }
   return len;
 }
