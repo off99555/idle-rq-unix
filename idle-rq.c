@@ -6,26 +6,27 @@
 int N = 0; // current sequence number
 
 char* makeframes(char *buf, size_t len);
+int parity(char frame);
 
 ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
   char *tmp = (char*)buf;
+  printf("Buf:\n");
+  while (*tmp) {
+    printbits(*tmp);
+    tmp++;
+  }
+  char *frames = makeframes((char*)buf, len);
+  tmp = frames;
+  printf("Frames:\n");
+  while (*tmp) {
+    printbits(*tmp);
+    tmp++;
+  }
   // make frames
   // for each frame, send to secondary, set a timer to resend I(N)
   // and wait for secondary to
   // send a frame back, test for ACK/NAK, if it's ACK(N) and not corrupted,
   // send next frame(N+1) else send current frame again
-  printf("Buf:\n");
-  while (*tmp) {
-    /* *tmp = corrupt(*tmp); */
-    printbits(*tmp);
-    tmp++;
-  }
-  char *frames = makeframes((char*)buf, len);
-  printf("Frames:\n");
-  while (*frames) {
-    printbits(*frames);
-    frames++;
-  }
   return send(sockfile, buf, len, flags);
 }
 
@@ -70,8 +71,21 @@ char *makeframes(char *buf, size_t len) {
       frames[fNo] |= 1 << 6; // turn on the seqNo bit
     }
 
-    // ad
+    // add parity bits
+    if (parity(frames[fNo])) {
+      frames[fNo] |= 1 << 7;
+    }
     fNo++;
   }
   return frames;
+}
+
+// return parity function of 0th to 7th bit
+// currently, the parity function is just XOR
+int parity(char frame) {
+  int result = 0, i;
+  for (i = 0; i < 7; i++) {
+    result ^= (frame >> i) & 1;
+  }
+  return result;
 }
