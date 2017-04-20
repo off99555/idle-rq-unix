@@ -45,6 +45,7 @@ int main(void) {
   // htons - hostshort to network (little endian to big endian)
   servaddr.sin_port = htons(PORT);
   servaddr.sin_addr.s_addr = inet_addr(ADDRESS);
+  printf("Connecting to %s on port %d ...\n", ADDRESS, PORT);
   int connect_status = connect(
     socket_desc,
     (struct sockaddr *) &servaddr,
@@ -66,27 +67,27 @@ int main(void) {
   }
   printf("Message sent: \n\"%s\"\n", content);
 
-  // receiving from the server
-  int msgsize = recv(socket_desc, content, MAX_FILE_SIZE, 0);
-  if (msgsize == -1) {
-    fprintf(stderr, "Error: Cannot receive using recv()\n");
-    return EXIT_FAILURE;
-  }
-  content[msgsize] = 0;
-  printf("Message received, bytes: %d\n", msgsize);
-  printf("The message is \n\"%s\"\n", content);
+  /* // receiving from the server */
+  /* int msgsize = recv(socket_desc, content, MAX_FILE_SIZE, 0); */
+  /* if (msgsize == -1) { */
+  /*   fprintf(stderr, "Error: Cannot receive using recv()\n"); */
+  /*   return EXIT_FAILURE; */
+  /* } */
+  /* content[msgsize] = 0; */
+  /* printf("Message received, bytes: %d\n", msgsize); */
+  /* printf("The message is \n\"%s\"\n", content); */
 
-  // writing the result to a file
-  file = fopen(OUTFILENAME, "w");
-  if (fputs(content, file) == EOF) {
-    fprintf(stderr, "Error: Cannot write to a file\n");
-    return EXIT_FAILURE;
-  }
-  printf("File recently wrote: %s\n", OUTFILENAME);
-  if (fclose(file) == EOF) {
-    fprintf(stderr, "Error: Cannot close the file after writing\n");
-    return EXIT_FAILURE;
-  }
+  /* // writing the result to a file */
+  /* file = fopen(OUTFILENAME, "w"); */
+  /* if (fputs(content, file) == EOF) { */
+  /*   fprintf(stderr, "Error: Cannot write to a file\n"); */
+  /*   return EXIT_FAILURE; */
+  /* } */
+  /* printf("File recently wrote: %s\n", OUTFILENAME); */
+  /* if (fclose(file) == EOF) { */
+  /*   fprintf(stderr, "Error: Cannot close the file after writing\n"); */
+  /*   return EXIT_FAILURE; */
+  /* } */
 
   // close the socket and free the port
   int close_status = close(socket_desc);

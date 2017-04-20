@@ -109,14 +109,14 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  // send back to client
-  int sent_bytes = send(client_socket, msgbuffer, msgsize, 0);
-  if (sent_bytes != msgsize) {
-    fprintf(stderr, "Error: send() sent a different number of bytes than\
-        expected\n");
-    return EXIT_FAILURE;
-  }
-  printf("The message is sent back to the client.\n");
+  /* // send back to client */
+  /* int sent_bytes = send(client_socket, msgbuffer, msgsize, 0); */
+  /* if (sent_bytes != msgsize) { */
+  /*   fprintf(stderr, "Error: send() sent a different number of bytes than\ */
+  /*       expected\n"); */
+  /*   return EXIT_FAILURE; */
+  /* } */
+  /* printf("The message is sent back to the client.\n"); */
 
   // close the socket and free the port
   int close_status = close(socket_desc);
