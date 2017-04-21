@@ -103,7 +103,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     }
 
     // check for last frame
-    if ((ack >> 5) & 1) {
+    if ((frames[i] >> 5) & 1) {
       printf("This is the last I-frame.\n");
       break;
     }
