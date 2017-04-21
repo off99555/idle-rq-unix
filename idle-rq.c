@@ -29,14 +29,14 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
   printf("Frames (%zu):\n", n);
   int i;
   for (i = 0; i < n; i++) {
-    printf("Sending frame %d: ", i);
+    printf("Sending I-frame %d: ", i);
     printbits(frames[i]);
     mightsend(sockfile, frames[i]);
     // TODO: set a timer
     // wait for S to respond
     char ack; // we prefer first bit to say ACK, if it's 1 or NAK if 0
     recv(sockfile, &ack, 1, 0);
-    printf("Receiving: ");
+    printf("Receiving ACK frame: ");
     printbits(ack);
     int isack = ack & 1;
     printf("It's %s\n", isack ? "ACK" : "NAK");
@@ -68,7 +68,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   int i = 0;
   while (1) {
     recv(sockfile, frames+i, 1, 0);
-    printf("Receiving: ");
+    printf("Receiving I-frame %d: ", i);
     printbits(frames[i]);
     int corrup = corrupted(frames[i]);
     if (corrup) {
@@ -94,11 +94,12 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     if (parity(ack)) {
       ack |= 1 << 7;
     }
-    printf("Sending: ");
+    printf("Sending ACK frame: ");
     printbits(ack);
     mightsend(sockfile, ack);
-    if (!corrup && wanted)
+    if (ack & 1) {
       N = !N;
+    }
 
     // check for last frame
     if ((ack >> 5) & 1) {
