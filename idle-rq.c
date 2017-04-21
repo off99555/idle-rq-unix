@@ -98,11 +98,9 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     if (parity(ack)) {
       ack |= 1 << 7;
     }
-    if (!last) {
-      printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
-      printbits(ack);
-      mightsend(sockfile, ack);
-    }
+    printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
+    printbits(ack);
+    mightsend(sockfile, ack);
 
     if (ack & 1) {
       N = !N;
