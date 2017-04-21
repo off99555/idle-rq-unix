@@ -60,19 +60,19 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   // forever try to receive frames
   // for each frame, if corrupted or not proper order send NAK frame,
   // else send ACK and if last frame break
-  char frames[len*2+1];
+  char frames[len*2+1], frame;
   char ack;
   int i = 0;
   while (1) {
-    recv(sockfile, frames+i, 1, 0);
-    int corrup = corrupted(frames[i]);
-    int last = (frames[i] >> 5) & 1;
+    recv(sockfile, &frame, 1, 0);
+    int corrup = corrupted(frame);
+    int last = (frame >> 5) & 1;
     printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
-    printbits(frames[i]);
-    int wanted = N == ((frames[i] >> 6) & 1);
+    printbits(frame);
+    int wanted = N == ((frame >> 6) & 1);
     if (!corrup && !wanted) {
       fprintf(stderr, "The I-frame order is invalid.\n");
-      printf("Expected N=%d, got %d\n", N, ((frames[i] >> 6) & 1));
+      printf("Expected N=%d, got %d\n", N, ((frame >> 6) & 1));
     }
     if (corrup || !wanted) {
       ack = 0;
@@ -92,12 +92,9 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
     printbits(ack);
     mightsend(sockfile, ack);
-    if (ack & 1) {
-      N = !N;
-    }
 
     // check for last frame
-    if ((frames[i] >> 5) & 1) {
+    if ((frame >> 5) & 1) {
       /* printf("This is the last I-frame.\n"); */
       //TODO: try to not send the last ACK frame back and let Primary notice
       // that you got the last I-frame by closing the socket
@@ -106,7 +103,11 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
       // for the ack from you
       break;
     }
-    i++;
+    if (ack & 1) {
+      N = !N;
+      frames[i] = frame;
+      i++;
+    }
   }
 
   // join packets from frames together into *buf
