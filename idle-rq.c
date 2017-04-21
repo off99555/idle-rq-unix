@@ -34,7 +34,12 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
     // TODO: set a timer
     // wait for S to respond
     char ack; // we prefer first bit to say ACK, if it's 1 or NAK if 0
-    recv(sockfile, &ack, 1, 0);
+    ssize_t status = recv(sockfile, &ack, 1, 0);
+    if (status == 0) {
+      // the Secondary has closed the socket
+      printf("Secondary has closed connection, indicating proper transmission. ACK frame not needed\n");
+      break;
+    }
     int isack = ack & 1;
     int corrup = corrupted(ack);
     printf("Receiving %s frame: ", corrup ? "a corrupted" : isack ? "ACK" : "NAK");
@@ -90,9 +95,11 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     if (parity(ack)) {
       ack |= 1 << 7;
     }
-    printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
-    printbits(ack);
-    mightsend(sockfile, ack);
+    if (!last) {
+      printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
+      printbits(ack);
+      mightsend(sockfile, ack);
+    }
 
     if (ack & 1) {
       N = !N;
@@ -112,6 +119,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   }
 
   // join packets from frames together into *buf
+  printf("Joining frames ...\n");
   joinframes(frames, buf);
   return strlen(buf);
 }
