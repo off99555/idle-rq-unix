@@ -2,3 +2,8 @@ server serves as secondary AKA receiver
 client serves as primary AKA sender
 
 but you need to run the server first!
+
+first we need to define our frame structure
+our frame is a byte big
+the first 5 bits are used for data
+the last 3 bits are LastFrameIndicator, SeqNo, Parity bit respectively
