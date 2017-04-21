@@ -11,3 +11,4 @@
 char corrupt(char frame);
 void mightsend(int sockfile, char frame);
 void printbits(char frame);
+int rand_lim(int limit);
