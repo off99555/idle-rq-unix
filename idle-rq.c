@@ -66,7 +66,8 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   while (1) {
     recv(sockfile, frames+i, 1, 0);
     int corrup = corrupted(frames[i]);
-    printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : "", i);
+    int last = (frames[i] >> 5) & 1;
+    printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
     printbits(frames[i]);
     int wanted = N == ((frames[i] >> 6) & 1);
     if (!corrup && !wanted) {
@@ -97,7 +98,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
 
     // check for last frame
     if ((frames[i] >> 5) & 1) {
-      printf("This is the last I-frame.\n");
+      /* printf("This is the last I-frame.\n"); */
       //TODO: try to not send the last ACK frame back and let Primary notice
       // that you got the last I-frame by closing the socket
       // Primary should check if the socket is closed that mean you are done
