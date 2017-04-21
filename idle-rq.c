@@ -6,6 +6,7 @@
 
 int N = 0; // current sequence number
 
+char *joinframes(char *frames);
 char* makeframes(char *buf, size_t len);
 int parity(char frame);
 int corrupted(char frame);
@@ -93,8 +94,13 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     printbits(ack);
     mightsend(sockfile, ack);
 
+    if (ack & 1) {
+      N = !N;
+      frames[i] = frame;
+      i++;
+    }
     // check for last frame
-    if ((frame >> 5) & 1) {
+    if (last) {
       /* printf("This is the last I-frame.\n"); */
       //TODO: try to not send the last ACK frame back and let Primary notice
       // that you got the last I-frame by closing the socket
@@ -103,15 +109,22 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
       // for the ack from you
       break;
     }
-    if (ack & 1) {
-      N = !N;
-      frames[i] = frame;
-      i++;
-    }
   }
 
   // join packets from frames together into *buf
+  buf = joinframes(frames);
   return len;
+}
+
+// join frames into buffer data
+char *joinframes(char *frames) {
+  size_t len = strlen(frames);
+  printf("len %zu\n", len);
+  size_t i;
+  for (i = 0; i <= len; i++) {
+    printbits(frames[i]);
+  }
+  return NULL;
 }
 
 // split data into packets then make frames containing them
