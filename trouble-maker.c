@@ -10,7 +10,12 @@ char corrupt(char frame) {
 }
 
 void mightsend(int sockfile, char frame) {
+  static int r = 0;
+  if (!r) {
+    frame = corrupt(frame);
+  }
   send(sockfile, &frame, 1, 0);
+  r++;
 }
 
 void printbits(char frame) {

@@ -4,8 +4,6 @@
 #include "idle-rq.h"
 #include "trouble-maker.h"
 
-#define BUFSIZE 10000
-
 int N = 0; // current sequence number
 
 char* makeframes(char *buf, size_t len);
@@ -36,17 +34,15 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
     // wait for S to respond
     char ack; // we prefer first bit to say ACK, if it's 1 or NAK if 0
     recv(sockfile, &ack, 1, 0);
-    printf("Receiving ACK frame: ");
-    printbits(ack);
     int isack = ack & 1;
-    if (!isack)
-      printf("It's %s\n", isack ? "ACK" : "NAK");
+    int corrup = corrupted(ack);
+    printf("Receiving %s frame: ", corrup ? "a corrupted" : isack ? "ACK" : "NAK");
+    printbits(ack);
     int wanted = N == ((ack >> 6) & 1);
-    if (!wanted) {
+    if (!corrup && !wanted) { // show msg only when the frame is not corrupted
       printf("Its order is %s\n", wanted ? "valid" : "NOT valid");
       printf("Expected N=%d, got %d\n", N, ((ack >> 6) & 1));
     }
-    int corrup = corrupted(ack);
     if (isack // if the 1st bit is ack
         && wanted // if seqNo is valid
         && !corrup) { // if isn't corrupted
@@ -64,19 +60,16 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   // forever try to receive frames
   // for each frame, if corrupted or not proper order send NAK frame,
   // else send ACK and if last frame break
-  char frames[BUFSIZE];
+  char frames[len*2+1];
   char ack;
   int i = 0;
   while (1) {
     recv(sockfile, frames+i, 1, 0);
-    printf("Receiving I-frame %d: ", i);
-    printbits(frames[i]);
     int corrup = corrupted(frames[i]);
-    if (corrup) {
-      fprintf(stderr, "The I-frame is corrupted.\n");
-    }
+    printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : "", i);
+    printbits(frames[i]);
     int wanted = N == ((frames[i] >> 6) & 1);
-    if (!wanted) {
+    if (!corrup && !wanted) {
       fprintf(stderr, "The I-frame order is invalid.\n");
       printf("Expected N=%d, got %d\n", N, ((frames[i] >> 6) & 1));
     }
@@ -95,7 +88,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     if (parity(ack)) {
       ack |= 1 << 7;
     }
-    printf("Sending ACK frame: ");
+    printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
     printbits(ack);
     mightsend(sockfile, ack);
     if (ack & 1) {
