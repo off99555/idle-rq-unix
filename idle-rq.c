@@ -39,17 +39,18 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
     printf("Receiving ACK frame: ");
     printbits(ack);
     int isack = ack & 1;
-    printf("It's %s\n", isack ? "ACK" : "NAK");
+    if (!isack)
+      printf("It's %s\n", isack ? "ACK" : "NAK");
     int wanted = N == ((ack >> 6) & 1);
-    printf("Its order is %s\n", wanted ? "valid" : "NOT valid");
     if (!wanted) {
+      printf("Its order is %s\n", wanted ? "valid" : "NOT valid");
       printf("Expected N=%d, got %d\n", N, ((ack >> 6) & 1));
     }
     int corrup = corrupted(ack);
     if (isack // if the 1st bit is ack
         && wanted // if seqNo is valid
         && !corrup) { // if isn't corrupted
-      printf("Go send next frame.\n");
+      /* printf("Go send next frame.\n"); */
       N = !N;
     } else {
       printf("Resend this frame again.\n");
