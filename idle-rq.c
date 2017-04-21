@@ -6,7 +6,7 @@
 
 int N = 0; // current sequence number
 
-char *joinframes(char *frames);
+void joinframes(char *frames, char *buf);
 char* makeframes(char *buf, size_t len);
 int parity(char frame);
 int corrupted(char frame);
@@ -112,19 +112,26 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   }
 
   // join packets from frames together into *buf
-  buf = joinframes(frames);
-  return len;
+  joinframes(frames, buf);
+  return strlen(buf);
 }
 
 // join frames into buffer data
-char *joinframes(char *frames) {
+void joinframes(char *frames, char* buf) {
   size_t len = strlen(frames);
-  printf("len %zu\n", len);
-  size_t i;
-  for (i = 0; i <= len; i++) {
-    printbits(frames[i]);
+  size_t i, j;
+  for (i = 0; i < len/2; i++) {
+    buf[i] = 0;
+    for (j = 0; j < 4; j++) {
+      if ((frames[i*2] >> j) & 1) {
+        buf[i] |= 1 << j;
+      }
+      if ((frames[i*2+1] >> j) & 1) {
+        buf[i] |= 1 << (j+4);
+      }
+    }
   }
-  return NULL;
+  buf[i] = 0;
 }
 
 // split data into packets then make frames containing them
