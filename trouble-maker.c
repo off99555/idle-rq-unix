@@ -16,7 +16,7 @@ void mightsend(int sockfile, char frame) {
 void printbits(char frame) {
   int i;
   for (i = 0; i < 8; i++) {
-    bool on = frame & (1 << i);
+    bool on = (frame >> i) & 1;
     printf("%d", on);
   }
   printf("\n");
