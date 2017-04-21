@@ -120,9 +120,9 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
 }
 
 // split data into packets then make frames containing them
-// 5th bit is last frame, 6th bit is seqNo, 7th bit is parity
+// 4th bit is nothing, 5th bit is last frame, 6th bit is seqNo, 7th bit is parity
 char *makeframes(char *buf, size_t len) {
-  char *frames = (char*) malloc(len*2); // len*2 is rough size approximation
+  char *frames = (char*) malloc(len*2+1);
   int fNo = 0; // current frame number that we are filling bits into
   int bufindex = 0;
   int bufbit = 0; // current bit that we are dealing with
@@ -130,7 +130,7 @@ char *makeframes(char *buf, size_t len) {
   while (!done) {
     frames[fNo] = 0;
     int i;
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 4; i++) {
       if (buf[bufindex] & (1 << bufbit)) {
         frames[fNo] |= 1 << i;
       }

@@ -5,7 +5,8 @@ but you need to run the server first!
 
 first we need to define our frame structure
 our frame is a byte big
-the first 5 bits are used for data
+the first 4 bits are used for data
+the middle bit is for nothing (currently)
 the last 3 bits are LastFrameIndicator, SeqNo, Parity bit respectively
 
 if it's an ACK/NAK frame, the first bit will be 1 if ACK and 0 if NAK
