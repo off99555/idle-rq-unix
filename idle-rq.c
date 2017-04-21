@@ -70,7 +70,10 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   char ack;
   int i = 0;
   while (1) {
-    recv(sockfile, &frame, 1, 0);
+    ssize_t status = recv(sockfile, &frame, 1, 0);
+    if (status == 0) {
+      fprintf(stderr, "Primary has closed connection, unexpected behavior!\n");
+    }
     int corrup = corrupted(frame);
     int last = (frame >> 5) & 1;
     printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
