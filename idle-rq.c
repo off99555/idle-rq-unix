@@ -53,7 +53,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       /* printf("Go send next frame.\n"); */
       N = !N;
     } else {
-      printf("Resend this frame again.\n");
+      printf("Resend this I-frame again.\n");
       i--;
     }
   }
@@ -73,11 +73,11 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     printbits(frames[i]);
     int corrup = corrupted(frames[i]);
     if (corrup) {
-      fprintf(stderr, "The frame is corrupted.\n");
+      fprintf(stderr, "The I-frame is corrupted.\n");
     }
     int wanted = N == ((frames[i] >> 6) & 1);
     if (!wanted) {
-      fprintf(stderr, "The frame is not what we wanted.\n");
+      fprintf(stderr, "The I-frame order is invalid.\n");
       printf("Expected N=%d, got %d\n", N, ((frames[i] >> 6) & 1));
     }
     if (corrup || !wanted) {
