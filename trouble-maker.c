@@ -7,7 +7,7 @@
 
 short corrupt(short frame) {
   /* printbits(frame); */
-  int bit = rand_lim(7);
+  int bit = rand_lim(16);
   return frame ^ (1 << bit);
 }
 
