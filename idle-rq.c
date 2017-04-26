@@ -8,6 +8,7 @@ const int PARITY_BIT = 15;
 const int SEQ_BIT = 14;
 const int LAST_INDICATOR_BIT = 13;
 const int ACK_BIT = 12;
+const int TIMEOUT_USEC = 1500; // micro secs
 
 void joinframes(short *frames, char *buf, int len);
 short* makeframes(char *buf, size_t len);
@@ -39,15 +40,34 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
     printstat(frames[i]);
     // TxFrame (format and transmit the frame)
     mightsend(sockfile, frames[i]);
-    // TODO: Start_timer; Vs++;
+    // TODO: Start_timer; Vs++; (Vs=send sequence variable, which is not important
+    // in this implementation)
+
+    // set timeout for recv(), see http://stackoverflow.com/a/2939145/2593810
+    struct timeval tv;
+    tv.tv_sec = TIMEOUT_USEC / 1000;
+    tv.tv_usec = TIMEOUT_USEC % 1000;
+    setsockopt(
+      sockfile,
+      SOL_SOCKET,
+      SO_RCVTIMEO,
+      (const char*)&tv,
+      sizeof(struct timeval)
+    );
+
     // PresentState = WTACK: wait for Secondary to respond
     short ack; // we prefer ACK_BIT bit to mean ACK, if it's 1 or NAK if 0
     ssize_t status = recv(sockfile, &ack, 2, 0); // receiving the ACK frame
     // TODO: TEXP: if time expire do RetxFrame; Start_timer; PresentState=WTACK;
+
     if (status == 0) {
       // the Secondary has closed the socket
       printf("Secondary has closed connection, indicating proper transmission. ACK frame not needed. Primary process is terminating.\n");
       break;
+    } else if (status < 2) { // Timer expired
+      printf("TIMEOUT: Retransmit this I-frame again.\n");
+      i--;
+      continue;
     }
     int isack = testbit(ack, ACK_BIT);
     int corrup = corrupted(ack);
@@ -61,7 +81,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       int P1 = !corrup;
       if (P0) {
         if (P1) {
-          // TODO: begin Stop_timer;
+          // TODO: Stop_timer; (in our implementation, we won't do anything)
           // State=IDLE (in our implementation, go send another frame immediately)
           continue;
         } else {
