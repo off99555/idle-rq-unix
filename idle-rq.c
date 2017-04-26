@@ -8,7 +8,7 @@ const int PARITY_BIT = 15;
 const int SEQ_BIT = 14;
 const int LAST_INDICATOR_BIT = 13;
 const int ACK_BIT = 12;
-const int TIMEOUT_USEC = 1500; // micro secs
+const int TIMEOUT_MSEC = 1500; // milli secs
 
 void joinframes(short *frames, char *buf, int len);
 short* makeframes(char *buf, size_t len);
@@ -45,8 +45,8 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
 
     // set timeout for recv(), see http://stackoverflow.com/a/2939145/2593810
     struct timeval tv;
-    tv.tv_sec = TIMEOUT_USEC / 1000;
-    tv.tv_usec = TIMEOUT_USEC % 1000;
+    tv.tv_sec = TIMEOUT_MSEC / 1000;
+    tv.tv_usec = (TIMEOUT_MSEC % 1000) * 1000;
     setsockopt(
       sockfile,
       SOL_SOCKET,
@@ -65,7 +65,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       printf("Secondary has closed connection, indicating proper transmission. ACK frame not needed. Primary process is terminating.\n");
       break;
     } else if (status < 2) { // Timer expired
-      printf("TIMEOUT: Retransmit this I-frame again.\n");
+      printf("-- TIMEOUT: Retransmit this I-frame again.\n");
       i--;
       continue;
     }
