@@ -14,7 +14,7 @@ short corrupt(short frame) {
 void mightsend(int sockfile, short frame) {
   int random = rand_lim(100);
   if (random < 30) { // chance to corrupt
-    /* frame = corrupt(frame); */
+    frame = corrupt(frame);
   }
   send(sockfile, &frame, 2, 0);
 }

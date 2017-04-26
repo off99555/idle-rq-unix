@@ -60,13 +60,12 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       int P0 = NS == NR;
       int P1 = !corrup;
       if (P0) {
-        printf("Its order is %s\n", P0 ? "valid" : "NOT valid");
-        printf("Expected N=%d, got %d\n", NS, NR);
         if (P1) {
           // TODO: begin Stop_timer;
           // State=IDLE (in our implementation, go send another frame immediately)
           continue;
         } else {
+          printf("Error: Expected N(S)=N(R)=%d, got N(S)=%d\n", NR, NS);
           // RetxFrame; retransmit I-frame waiting acknowledgement
           printf("Resend this I-frame again.\n");
           // Start_timer;
@@ -128,8 +127,8 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
       if (P2) {
         // TxACK(X);
         isack = 1;
-        fprintf(stderr, "The I-frame order is invalid. Duplicate detected.\n");
-        printf("Expected N=%d, got %d\n", Vr, X);
+        fprintf(stderr, "The I-frame order is invalid. Duplication detected.\n");
+        printf("Expected N(S)=Vr=%d, got N(S)=%d\n", Vr, X);
       } else if (P0) {
         // LDATAind: Pass contents of received I-frame to user AP with
         // L_DATA.indication primitive
