@@ -17,11 +17,13 @@ void mightsend(int sockfile, short frame) {
     random = rand_lim(100);
     if (random <= 30) { // chance to corrupt
       frame = corrupt(frame);
-      printf("-- TROUBLE MADE: Corrupted Frame\n");
+      printf("\t[[ Unfortunately, Trouble Occurred: The frame is CORRUPTED ]]\n");
     }
+    random = rand_lim(1000);
+
     send(sockfile, &frame, 2, 0);
   } else {
-    printf("-- TROUBLE MADE: Frame get lost\n");
+    printf("\t[[ Unfortunately, Trouble Occurred: The frame is LOST ]]\n");
   }
 }
 

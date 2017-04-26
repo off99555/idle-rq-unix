@@ -57,6 +57,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
 
     // PresentState = WTACK: wait for Secondary to respond
     short ack; // we prefer ACK_BIT bit to mean ACK, if it's 1 or NAK if 0
+    printf("Waiting for an ACK frame ...\n");
     ssize_t status = recv(sockfile, &ack, 2, 0); // receiving the ACK frame
     // TODO: TEXP: if time expire do RetxFrame; Start_timer; PresentState=WTACK;
 
@@ -65,7 +66,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       printf("Secondary has closed connection, indicating proper transmission. ACK frame not needed. Primary process is terminating.\n");
       break;
     } else if (status < 2) { // Timer expired
-      printf("-- TIMEOUT: Retransmit this I-frame again.\n");
+      printf("TIMEOUT: No response within %d millisecs. Retransmit this I-frame again.\n", TIMEOUT_MSEC);
       i--;
       continue;
     }
@@ -82,6 +83,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       if (P0) {
         if (P1) {
           // TODO: Stop_timer; (in our implementation, we won't do anything)
+          printf("Timer Stopped: Valid ACK N(S)=N(R) is received.\n");
           // State=IDLE (in our implementation, go send another frame immediately)
           continue;
         } else {
@@ -123,6 +125,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   int i = 0; // frame number that we are waiting for
   while (1) {
     // PresentState=WTIFM; Waiting for event: IRCVD
+    printf("Waiting for an I-frame ...\n");
     ssize_t status = recv(sockfile, &frame, 2, 0);
     if (status == 0) {
       fprintf(stderr, "Primary has closed connection, unexpected behavior!\n");
