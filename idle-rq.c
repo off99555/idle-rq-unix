@@ -34,7 +34,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
   for (i = 0; i < n; i++) {
     // IDLE state: assume that we receive an incoming I-frame
     // from above layer without the need to wait then we send it immediately
-    printf("Sending I-frame %d: ", i);
+    printf(">  Sending I-frame %d: ", i);
     printbits(frames[i]);
     printstat(frames[i]);
     // TxFrame (format and transmit the frame)
@@ -51,7 +51,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
     }
     int isack = testbit(ack, ACK_BIT);
     int corrup = corrupted(ack);
-    printf("Receiving %s frame: ", corrup ? "a corrupted" : isack ? "ACK" : "NAK");
+    printf(" < Receiving %s frame: ", corrup ? "a corrupted" : isack ? "ACK" : "NAK");
     printbits(ack);
     printstat(ack);
     if (isack) {
@@ -114,7 +114,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     int P1 = !corrup;
     int P2 = NS == !Vr;
     int last = testbit(frame, LAST_INDICATOR_BIT);
-    printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
+    printf(" < Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
     printbits(frame);
     printstat(frame);
     ack = 0;
@@ -144,7 +144,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     setbit(&ack, ACK_BIT, isack);
     setbit(&ack, SEQ_BIT, X);
     setbit(&ack, PARITY_BIT, parity(ack));
-    printf("Sending %s frame: ", testbit(ack, ACK_BIT) ? "ACK" : "NAK");
+    printf(">  Sending %s frame: ", testbit(ack, ACK_BIT) ? "ACK" : "NAK");
     printbits(ack);
     printstat(ack);
     mightsend(sockfile, ack);

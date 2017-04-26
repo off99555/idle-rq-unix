@@ -13,10 +13,16 @@ short corrupt(short frame) {
 
 void mightsend(int sockfile, short frame) {
   int random = rand_lim(100);
-  if (random < 30) { // chance to corrupt
-    frame = corrupt(frame);
+  if (random <= 100) { // chance to send and not get lost on the way
+    random = rand_lim(100);
+    if (random <= 30) { // chance to corrupt
+      frame = corrupt(frame);
+      printf("-- TROUBLE MADE: Corrupted Frame\n");
+    }
+    send(sockfile, &frame, 2, 0);
+  } else {
+    printf("-- TROUBLE MADE: Frame get lost\n");
   }
-  send(sockfile, &frame, 2, 0);
 }
 
 void printbytebits(char byte) {
