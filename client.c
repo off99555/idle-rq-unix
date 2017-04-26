@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include "idle-rq.h"
+#include <time.h>
 
 #define PORT 5104
 #define ADDRESS "127.0.0.1" // IP cil.informatics = 10.16.64.39
@@ -15,6 +16,7 @@
 #define MAX_FILE_SIZE 10000
 
 int main(void) {
+  srand(time(NULL));
   // socket - create an endpoint for communication
   int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_desc == -1) {

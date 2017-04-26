@@ -6,9 +6,10 @@
 // premature timeout problem, but we want to mimic link layer.
 // idle RQ does not work if premature timeout problem is found
 
-// corrupt a frame, 5th bit is for last frame indicator,
-// 6th bit is for seqNo, 7th bit is for parity
-char corrupt(char frame);
-void mightsend(int sockfile, char frame);
-void printbits(char frame);
+short corrupt(short frame);
+void mightsend(int sockfile, short frame);
+void printbytebits(char byte);
+void printbits(short frame);
 int rand_lim(int limit);
+int testbit(short frame, int bitorder);
+void setbit(short *frame, int bitorder, int value);

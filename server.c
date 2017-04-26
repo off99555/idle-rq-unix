@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "idle-rq.h"
+#include <time.h>
 
 #define PORT 5104
 #define BUFSIZE 10000
@@ -24,6 +25,7 @@ void invertcase(char *str) {
 }
 
 int main(void) {
+  srand(time(NULL));
   // socket - create an endpoint for communication
   int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_desc == -1) {

@@ -5,25 +5,35 @@
 #include "stdio.h"
 #include "stdbool.h"
 
-char corrupt(char frame) {
+short corrupt(short frame) {
   /* printbits(frame); */
   int bit = rand_lim(7);
   return frame ^ (1 << bit);
 }
 
-void mightsend(int sockfile, char frame) {
+void mightsend(int sockfile, short frame) {
   int random = rand_lim(100);
   if (random < 30) { // chance to corrupt
-    frame = corrupt(frame);
+    /* frame = corrupt(frame); */
   }
-  send(sockfile, &frame, 1, 0);
+  send(sockfile, &frame, 2, 0);
 }
 
-void printbits(char frame) {
+void printbytebits(char byte) {
   int i;
   for (i = 0; i < 8; i++) {
-    bool on = (frame >> i) & 1;
+    bool on = testbit(byte, i);
     printf("%d", on);
+  }
+  printf("\n");
+}
+
+void printbits(short frame) {
+  int i;
+  for (i = 0; i < 16; i++) {
+    bool on = testbit(frame, i);
+    printf("%d", on);
+    if (i == 7) printf(" ");
   }
   printf("\n");
 }
@@ -38,4 +48,12 @@ int rand_lim(int limit) {
     retval = rand() / divisor;
   } while (retval > limit);
   return retval;
+}
+
+int testbit(short frame, int bitorder) {
+  return (frame >> bitorder) & 1;
+}
+
+void setbit(short *frame, int bitorder, int value) {
+  *frame ^= (-value ^ *frame) & (1 << bitorder);
 }

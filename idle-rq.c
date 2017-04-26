@@ -5,49 +5,56 @@
 #include "trouble-maker.h"
 
 int N = 0; // current sequence number
+const int PARITY_BIT = 15;
+const int SEQ_BIT = 14;
+const int LAST_INDICATOR_BIT = 13;
+const int ACK_BIT = 12;
 
-void joinframes(char *frames, char *buf);
-char* makeframes(char *buf, size_t len);
-int parity(char frame);
-int corrupted(char frame);
+void joinframes(short *frames, char *buf, int len);
+short* makeframes(char *buf, size_t len);
+int parity(short frame);
+int corrupted(short frame);
+void printstat(short frame);
 
 ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
   char *tmp = (char*)buf;
   printf("Buf (%zu):\n", len);
   while (*tmp) {
-    printbits(*tmp);
+    printbytebits(*tmp);
     tmp++;
   }
   // make frames
-  char *frames = makeframes((char*)buf, len);
+  short *frames = makeframes((char*)buf, len);
   // for each frame, send to secondary, set a timer to resend I(N)
   // and wait for secondary to
   // send a frame back, test for ACK/NAK, if it's ACK(N) and not corrupted,
   // send next frame(N+1) else send current frame again
-  size_t n = strlen(frames);
+  size_t n = len;
   printf("Frames (%zu):\n", n);
   int i;
   for (i = 0; i < n; i++) {
     printf("Sending I-frame %d: ", i);
     printbits(frames[i]);
+    printstat(frames[i]);
     mightsend(sockfile, frames[i]);
     // TODO: set a timer
-    // wait for S to respond
-    char ack; // we prefer first bit to say ACK, if it's 1 or NAK if 0
-    ssize_t status = recv(sockfile, &ack, 1, 0);
+    // WTACK state: wait for Secondary to respond
+    short ack; // we prefer ACK_BIT bit to mean ACK, if it's 1 or NAK if 0
+    ssize_t status = recv(sockfile, &ack, 2, 0); // receiving the ACK frame
     if (status == 0) {
       // the Secondary has closed the socket
-      printf("Secondary has closed connection, indicating proper transmission. ACK frame not needed\n");
+      printf("Secondary has closed connection, indicating proper transmission. ACK frame not needed. Primary process is terminating.\n");
       break;
     }
-    int isack = ack & 1;
+    int isack = testbit(ack, ACK_BIT);
     int corrup = corrupted(ack);
     printf("Receiving %s frame: ", corrup ? "a corrupted" : isack ? "ACK" : "NAK");
     printbits(ack);
-    int wanted = N == ((ack >> 6) & 1);
+    printstat(ack);
+    int wanted = N == testbit(ack, SEQ_BIT);
     if (!corrup && !wanted) { // show msg only when the frame is not corrupted
       printf("Its order is %s\n", wanted ? "valid" : "NOT valid");
-      printf("Expected N=%d, got %d\n", N, ((ack >> 6) & 1));
+      printf("Expected N=%d, got %d\n", N, testbit(ack, SEQ_BIT));
     }
     if (isack // if the 1st bit is ack
         && wanted // if seqNo is valid
@@ -66,43 +73,42 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
   // forever try to receive frames
   // for each frame, if corrupted or not proper order send NAK frame,
   // else send ACK and if last frame break
-  char frames[len*2+1], frame;
-  char ack;
+  short frames[len+1], frame;
+  short ack = 0;
   int i = 0;
   while (1) {
-    ssize_t status = recv(sockfile, &frame, 1, 0);
+    ssize_t status = recv(sockfile, &frame, 2, 0);
     if (status == 0) {
       fprintf(stderr, "Primary has closed connection, unexpected behavior!\n");
     }
     int corrup = corrupted(frame);
-    int last = (frame >> 5) & 1;
+    int last = testbit(frame, LAST_INDICATOR_BIT);
+    int wanted = N == testbit(frame, SEQ_BIT);
+    if (!corrup && !wanted) {
+      i--;
+    }
     printf("Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
     printbits(frame);
-    int wanted = N == ((frame >> 6) & 1);
+    printstat(frame);
     if (!corrup && !wanted) {
-      fprintf(stderr, "The I-frame order is invalid.\n");
-      printf("Expected N=%d, got %d\n", N, ((frame >> 6) & 1));
+      fprintf(stderr, "The I-frame order is invalid. Duplicate detected.\n");
+      printf("Expected N=%d, got %d\n", N, testbit(frame, SEQ_BIT));
     }
-    if (corrup || !wanted) {
-      ack = 0;
-    } else {
-      ack = 1;
-    }
+    setbit(&ack, ACK_BIT, !corrup);
 
     // add seqNo bit
-    if (N) { // if wanting odd seqNo
-      ack |= 1 << 6; // turn on the seqNo bit
+    if (wanted && N || (!wanted && testbit(frame, SEQ_BIT))) { // if wanting odd seqNo
+      setbit(&ack, SEQ_BIT, 1);
     }
 
     // add parity bit
-    if (parity(ack)) {
-      ack |= 1 << 7;
-    }
-    printf("Sending %s frame: ", ack & 1 ? "ACK" : "NAK");
+    setbit(&ack, PARITY_BIT, parity(ack));
+    printf("Sending %s frame: ", testbit(ack, ACK_BIT) ? "ACK" : "NAK");
     printbits(ack);
+    printstat(ack);
     mightsend(sockfile, ack);
 
-    if (ack & 1) {
+    if (testbit(ack, ACK_BIT)) {
       N = !N;
       frames[i] = frame;
       i++;
@@ -121,22 +127,18 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
 
   // join packets from frames together into *buf
   printf("Joining frames ...\n");
-  joinframes(frames, buf);
+  joinframes(frames, buf, i);
   return strlen(buf);
 }
 
 // join frames into buffer data
-void joinframes(char *frames, char* buf) {
-  size_t len = strlen(frames);
+void joinframes(short *frames, char* buf, int len) {
   size_t i, j;
-  for (i = 0; i < len/2; i++) {
+  for (i = 0; i < len; i++) { // for each buffer
     buf[i] = 0;
-    for (j = 0; j < 4; j++) {
-      if ((frames[i*2] >> j) & 1) {
+    for (j = 0; j < 8; j++) { // for each bit
+      if (testbit(frames[i], j)) {
         buf[i] |= 1 << j;
-      }
-      if ((frames[i*2+1] >> j) & 1) {
-        buf[i] |= 1 << (j+4);
       }
     }
   }
@@ -145,39 +147,32 @@ void joinframes(char *frames, char* buf) {
 
 // split data into packets then make frames containing them
 // 4th bit is nothing, 5th bit is last frame, 6th bit is seqNo, 7th bit is parity
-char *makeframes(char *buf, size_t len) {
-  char *frames = (char*) malloc(len*2+1);
+short *makeframes(char *buf, size_t len) {
+  short *frames = (short*) malloc(len+1);
   int fNo = 0; // current frame number that we are filling bits into
-  int bufindex = 0;
-  int bufbit = 0; // current bit that we are dealing with
   int done = 0;
   while (!done) {
     frames[fNo] = 0;
     int i;
-    for (i = 0; i < 4; i++) {
-      if (buf[bufindex] & (1 << bufbit)) {
+    for (i = 0; i < 8; i++) {
+      if (buf[fNo] & (1 << i)) {
         frames[fNo] |= 1 << i;
       }
-      bufbit++;
-      if (bufbit >= 8) {
-        bufbit = 0;
-        bufindex++;
-        if (buf[bufindex] == 0 || bufindex >= len) { // if run out of buf
-          frames[fNo] |= 1 << 5; // last frame indicator
-          done = 1;
-          break; // go add header and leave unused bits blank
-        }
+      if (buf[fNo] == 0 || fNo >= len) { // if run out of buf
+        setbit(frames+fNo, LAST_INDICATOR_BIT, 1); // last frame indicator
+        done = 1;
+        break; // go add header and leave unused bits blank
       }
     }
 
     // add seqNo bit
     if (fNo % 2) { // if current frame sequence number is odd
-      frames[fNo] |= 1 << 6; // turn on the seqNo bit
+      setbit(frames+fNo, SEQ_BIT, 1); // turn on the seqNo bit
     }
 
     // add parity bit
     if (parity(frames[fNo])) {
-      frames[fNo] |= 1 << 7;
+      setbit(frames+fNo, PARITY_BIT, 1);
     }
     fNo++;
   }
@@ -186,14 +181,21 @@ char *makeframes(char *buf, size_t len) {
 
 // return parity function of 0th to 7th bit
 // currently, the parity function is just XOR
-int parity(char frame) {
+int parity(short frame) {
   int result = 0, i;
-  for (i = 0; i < 7; i++) {
+  for (i = 0; i < PARITY_BIT; i++) {
     result ^= (frame >> i) & 1;
   }
   return result;
 }
 
-int corrupted(char frame) {
-  return parity(frame) != ((frame >> 7) & 1);
+int corrupted(short frame) {
+  return parity(frame) != ((frame >> PARITY_BIT) & 1);
+}
+
+void printstat(short frame) {
+  printf("ACK: %d\n", testbit(frame, ACK_BIT));
+  printf("Last: %d\n", testbit(frame, LAST_INDICATOR_BIT));
+  printf("SEQ: %d\n", testbit(frame, SEQ_BIT));
+  printf("Parity: %d\n", testbit(frame, PARITY_BIT));
 }
