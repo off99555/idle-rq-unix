@@ -103,7 +103,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
           printf("Error: Wrong Seq and corrupted\n");
         } else {
           // do nothing
-          printf("Wrong Seq and not corrupted, should be impossible to get here\n");
+          printf("Error: Wrong Seq and not corrupted\n");
         }
       }
     } else {

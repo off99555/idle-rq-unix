@@ -1,9 +1,20 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
 #include "trouble-maker.h"
 #include "stdio.h"
 #include "stdbool.h"
+
+const int MAX_DELAY_MS = 5000;
+
+void *sender_thread(void *arg) {
+  int delay = rand_lim(MAX_DELAY_MS);
+  printf("[[ CHANNEL: The frame is expected to be sent in %d ms ]]\n", delay);
+  usleep(delay * 1000);
+  printf("Thread died\n");
+}
 
 short corrupt(short frame) {
   /* printbits(frame); */
@@ -13,17 +24,18 @@ short corrupt(short frame) {
 
 void mightsend(int sockfile, short frame) {
   int random = rand_lim(100);
-  if (random <= 50) { // chance to send and not get lost on the way
+  if (random <= 100) { // chance to send and not get lost on the way
     random = rand_lim(100);
     if (random <= 30) { // chance to corrupt
       frame = corrupt(frame);
-      printf("\t[[ Unfortunately, Trouble Occurred: The frame is CORRUPTED ]]\n");
+      printf("\t[[ CHANNEL: The frame is CORRUPTED ]]\n");
     }
-    random = rand_lim(1000);
-
+    pthread_t pt;
+    pthread_create(&pt, NULL, sender_thread, NULL);
     send(sockfile, &frame, 2, 0);
+    printf(" [[ CHANNEL: The frame is sent ]]\n");
   } else {
-    printf("\t[[ Unfortunately, Trouble Occurred: The frame is LOST ]]\n");
+    printf("\t[[ CHANNEL: The frame is LOST ]]\n");
   }
 }
 
