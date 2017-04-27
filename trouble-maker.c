@@ -8,8 +8,8 @@
 #include "stdbool.h"
 
 /* const int MAX_DELAY_MS = 3000; */
-const int SEND_CHANCE = 100; // chance to actually send (and not get lost)
-const int CORRUPT_CHANCE = -1; // chance to corrupt the frame given sending event
+const int SEND_CHANCE = 80; // chance to actually send (and not get lost)
+const int CORRUPT_CHANCE = 35; // chance to corrupt the frame given sending event
 
 struct send_data { // used for passing into thread function
   int sockfile;
@@ -27,8 +27,8 @@ struct send_data { // used for passing into thread function
 /*   free(data); */
 /* } */
 
+// randomly toggle a bit of the frame
 short corrupt(short frame) {
-  /* printbits(frame); */
   int bit = rand_lim(15);
   return frame ^ (1 << bit);
 }
@@ -42,7 +42,13 @@ void mightsend(int sockfile, short frame) {
       printf("\t[[ CHANNEL: The frame %d is CORRUPTED into frame %d ]]\n", frame, corrupted_frame);
       frame = corrupted_frame;
     }
-    send(sockfile, &frame, 2, 0);
+    int status = send(sockfile, &frame, 2, 0);
+    if (status <= 0) {
+      {
+        // the Secondary has closed the socket
+        printf("CHANNEL: [[ Sending failed, destination not available ]]\n");
+      }
+    }
     /* printf("\t[[ CHANNEL: The frame %d is SENT ]]\n", frame); */
     /* random = rand_lim(MAX_DELAY_MS); */
     /* struct send_data *data = (struct send_data*) malloc(sizeof(struct send_data)); */

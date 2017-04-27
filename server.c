@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -25,6 +26,51 @@ void invertcase(char *str) {
 }
 
 int main(void) {
+  int bufsize = BUFSIZE;
+  char msgbuffer[bufsize];
+  int pipefd[2];
+  pid_t cpid;
+  pipe(pipefd); // create the pipe
+  cpid = fork(); // duplicate the current process
+  if (cpid == 0) // if I am the child then
+  {
+    close(pipefd[0]); // close the read-end of the pipe, I'm not going to use it
+  }
+  else // if I am the parent then
+  {
+    close(pipefd[1]); // close the write-end of the pipe, thus sending EOF to the reader
+    char buf;
+    int msgsize = 0;
+    while (read(pipefd[0], &buf, 1) > 0) // read until EOF
+    {
+      msgbuffer[msgsize] = buf;
+      msgsize++;
+    }
+    msgbuffer[msgsize] = 0;
+    close(pipefd[0]); // close the read-end of the pipe, I'm not going to use it
+    wait(NULL); // wait for the child process to exit before I do the same
+
+    printf("Message received, bytes: %d\n", msgsize);
+    printf("The message is \n\"%s\"\n", msgbuffer);
+
+    // invert case the entire buffer
+    invertcase(msgbuffer);
+    printf("The message after case inversion: \n\"%s\"\n", msgbuffer);
+
+    // writing the result to a file
+    FILE *file = fopen(OUTFILENAME, "w");
+    if (fputs(msgbuffer, file) == EOF) {
+      fprintf(stderr, "Error: Cannot write to a file\n");
+      return EXIT_FAILURE;
+    }
+    printf("File recently wrote: %s\n", OUTFILENAME);
+    if (fclose(file) == EOF) {
+      fprintf(stderr, "Error: Cannot close the file after writing\n");
+      return EXIT_FAILURE;
+    }
+    exit(EXIT_SUCCESS);
+  }
+
   srand(time(NULL));
   // socket - create an endpoint for communication
   int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
@@ -84,8 +130,6 @@ int main(void) {
   // }
 
   // communicate
-  int bufsize = BUFSIZE;
-  char msgbuffer[bufsize];
   int msgsize = myrecv(client_socket, msgbuffer, bufsize, 0);
   if (msgsize == -1 ) {
     fprintf(stderr, "Error: Cannot receive using recv()\n");
@@ -93,24 +137,9 @@ int main(void) {
   }
   // ensure null-terminated string, otherwise it will print garbage below
   msgbuffer[msgsize] = 0;
-  printf("Message received, bytes: %d\n", msgsize);
-  printf("The message is \n\"%s\"\n", msgbuffer);
-
-  // invert case the entire buffer
-  invertcase(msgbuffer);
-  printf("The message after case inversion: \n\"%s\"\n", msgbuffer);
-
-  // writing the result to a file
-  FILE *file = fopen(OUTFILENAME, "w");
-  if (fputs(msgbuffer, file) == EOF) {
-    fprintf(stderr, "Error: Cannot write to a file\n");
-    return EXIT_FAILURE;
-  }
-  printf("File recently wrote: %s\n", OUTFILENAME);
-  if (fclose(file) == EOF) {
-    fprintf(stderr, "Error: Cannot close the file after writing\n");
-    return EXIT_FAILURE;
-  }
+  /* printf("Msg buffer: \"%s\" (%d)\n", msgbuffer, msgsize); */
+  write(pipefd[1], msgbuffer, msgsize); // send the msg to the parent
+  close(pipefd[1]); // close the write-end of the pipe
 
   /* // send back to client */
   /* int sent_bytes = send(client_socket, msgbuffer, msgsize, 0); */

@@ -8,7 +8,7 @@ const int PARITY_BIT = 15;
 const int SEQ_BIT = 14;
 const int LAST_INDICATOR_BIT = 13;
 const int ACK_BIT = 12;
-const int TIMEOUT_MSEC = 1500; // milli secs
+const int TIMEOUT_MSEC = 1200; // milli secs
 
 void joinframes(short *frames, char *buf, int len);
 short* makeframes(char *buf, size_t len);
