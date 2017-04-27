@@ -113,6 +113,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       continue;
     }
   }
+  printf("All %zu frames sent\n", n);
   return len;
 }
 
@@ -129,6 +130,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     ssize_t status = recv(sockfile, &frame, 2, 0);
     if (status == 0) {
       fprintf(stderr, "Primary has closed connection, unexpected behavior!\n");
+      return i;
     }
     int corrup = corrupted(frame);
     int NS = testbit(frame, SEQ_BIT);
@@ -136,7 +138,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
     int P0 = NS == Vr;
     int P1 = !corrup;
     int P2 = NS == !Vr;
-    int last = testbit(frame, LAST_INDICATOR_BIT);
+    int last = testbit(frame, LAST_INDICATOR_BIT) && P0 && P1;
     printf(" < Receiving %sI-frame %d: ", corrup ? "a corrupted " : last ? "the last " : "", i);
     printbits(frame);
     printstat(frame);
@@ -180,6 +182,7 @@ ssize_t myrecv(int sockfile, void *buf, size_t len, int flags) {
       // Primary should check if the socket is closed that mean you are done
       // and it should stop resending the last I-frame to you and stop waiting
       // for the ack from you
+      printf("Got last frame, stopped\n");
       break;
     }
   }

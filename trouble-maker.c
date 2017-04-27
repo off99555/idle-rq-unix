@@ -7,7 +7,7 @@
 #include "stdio.h"
 #include "stdbool.h"
 
-const int MAX_DELAY_MS = 5000;
+const int MAX_DELAY_MS = 3000;
 
 struct send_data { // used for passing into thread function
   int sockfile;
@@ -21,7 +21,7 @@ void *timed_send(void *arg) {
   struct send_data *data = (struct send_data*) arg;
   usleep(data->delay * 1000);
   send(data->sockfile, &data->frame, 2, 0);
-  printf(" [[ CHANNEL: The frame is sent ]]\n");
+  printf("\t[[ CHANNEL: The frame %d has arrived ]]\n", data->frame);
   free(data);
 }
 
@@ -37,18 +37,18 @@ void mightsend(int sockfile, short frame) {
     random = rand_lim(100);
     if (random <= 30) { // chance to corrupt
       frame = corrupt(frame);
-      printf("\t[[ CHANNEL: The frame is CORRUPTED ]]\n");
+      printf("\t[[ CHANNEL: The frame %d is CORRUPTED ]]\n", frame);
     }
     random = rand_lim(MAX_DELAY_MS);
     struct send_data *data = (struct send_data*) malloc(sizeof(struct send_data));
     data->sockfile = sockfile;
     data->frame = frame;
     data->delay = random;
-    printf("[[ CHANNEL: The frame is expected to be sent in %d ms ]]\n", random);
+    printf("\t[[ CHANNEL: The frame %d is arriving in %d ms ]]\n", frame, random);
     pthread_t pt;
     pthread_create(&pt, NULL, timed_send, data);
   } else {
-    printf("\t[[ CHANNEL: The frame is LOST ]]\n");
+    printf("\t[[ CHANNEL: The frame %d is LOST ]]\n", frame);
   }
 }
 
@@ -68,7 +68,7 @@ void printbits(short frame) {
     printf("%d", on);
     if (i == 7) printf(" ");
   }
-  printf("\n");
+  printf(" (%d)\n", frame);
 }
 
 // see http://stackoverflow.com/a/2999130/2593810 for more information
