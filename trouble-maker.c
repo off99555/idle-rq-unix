@@ -9,7 +9,7 @@
 
 /* const int MAX_DELAY_MS = 3000; */
 const int SEND_CHANCE = 80; // chance to actually send (and not get lost)
-const int CORRUPT_CHANCE = 35; // chance to corrupt the frame given sending event
+const int CORRUPT_CHANCE = 20; // chance to corrupt the frame given sending event
 
 struct send_data { // used for passing into thread function
   int sockfile;

@@ -258,8 +258,9 @@ int corrupted(short frame) {
 }
 
 void printstat(short frame) {
-  printf("ACK: %d ", testbit(frame, ACK_BIT));
-  printf("Last: %d ", testbit(frame, LAST_INDICATOR_BIT));
-  printf("SEQ: %d ", testbit(frame, SEQ_BIT));
-  printf("Parity: %d\n", testbit(frame, PARITY_BIT));
+  /* printf("ACK: %d ", testbit(frame, ACK_BIT)); */
+  /* printf("Last: %d ", testbit(frame, LAST_INDICATOR_BIT)); */
+  /* printf("SEQ: %d ", testbit(frame, SEQ_BIT)); */
+  /* printf("Parity: %d\n", testbit(frame, PARITY_BIT)); */
+  printf("\n");
 }
