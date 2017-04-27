@@ -8,6 +8,8 @@
 #include "stdbool.h"
 
 const int MAX_DELAY_MS = 3000;
+const int SEND_CHANCE = 70; // chance to actually send (and not get lost)
+const int CORRUPT_CHANCE = 30; // chance to corrupt the frame given sending event
 
 struct send_data { // used for passing into thread function
   int sockfile;
@@ -15,38 +17,41 @@ struct send_data { // used for passing into thread function
   int delay;
 };
 
-void *timed_send(void *arg);
+/* void *timed_send(void *arg); */
 
-void *timed_send(void *arg) {
-  struct send_data *data = (struct send_data*) arg;
-  usleep(data->delay * 1000);
-  send(data->sockfile, &data->frame, 2, 0);
-  printf("\t[[ CHANNEL: The frame %d has arrived ]]\n", data->frame);
-  free(data);
-}
+/* void *timed_send(void *arg) { */
+/*   struct send_data *data = (struct send_data*) arg; */
+/*   usleep(data->delay * 1000); */
+/*   send(data->sockfile, &data->frame, 2, 0); */
+/*   printf("\t[[ CHANNEL: The frame %d is sent ]]\n", data->frame); */
+/*   free(data); */
+/* } */
 
 short corrupt(short frame) {
   /* printbits(frame); */
-  int bit = rand_lim(16);
+  int bit = rand_lim(15);
   return frame ^ (1 << bit);
 }
 
 void mightsend(int sockfile, short frame) {
   int random = rand_lim(100);
-  if (random <= 100) { // chance to send and not get lost on the way
+  if (random <= SEND_CHANCE) { // chance to send and not get lost on the way
     random = rand_lim(100);
-    if (random <= 30) { // chance to corrupt
+    if (random <= CORRUPT_CHANCE) { // chance to corrupt
       frame = corrupt(frame);
       printf("\t[[ CHANNEL: The frame %d is CORRUPTED ]]\n", frame);
     }
-    random = rand_lim(MAX_DELAY_MS);
-    struct send_data *data = (struct send_data*) malloc(sizeof(struct send_data));
-    data->sockfile = sockfile;
-    data->frame = frame;
-    data->delay = random;
-    printf("\t[[ CHANNEL: The frame %d is arriving in %d ms ]]\n", frame, random);
-    pthread_t pt;
-    pthread_create(&pt, NULL, timed_send, data);
+    send(sockfile, &frame, 2, 0);
+    printf("\t[[ CHANNEL: The frame %d is SENT ]]\n", frame);
+    /* random = rand_lim(MAX_DELAY_MS); */
+    /* struct send_data *data = (struct send_data*) malloc(sizeof(struct send_data)); */
+    /* data->sockfile = sockfile; */
+    /* data->frame = frame; */
+    /* data->delay = random; */
+    /* printf("\t[[ CHANNEL: The frame %d will be sent in %d ms ]]\n", frame, random); */
+    /* pthread_t pt; */
+    /* pthread_create(&pt, NULL, timed_send, data); */
+
   } else {
     printf("\t[[ CHANNEL: The frame %d is LOST ]]\n", frame);
   }

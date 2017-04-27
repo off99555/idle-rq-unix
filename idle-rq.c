@@ -87,7 +87,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
           // State=IDLE (in our implementation, go send another frame immediately)
           continue;
         } else {
-          printf("Error: Expected N(S)=N(R)=%d, got N(S)=%d\n", NR, NS);
+          printf("ACK frame received is corrupted\n");
           // RetxFrame; retransmit I-frame waiting acknowledgement
           printf("Resend this I-frame again.\n");
           // Start_timer;
@@ -97,13 +97,14 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
           continue;
         }
       } else {
+          printf("Error: Expected N(S)=N(R)=%d, got N(S)=%d\n", NR, NS);
         if (!P1) {
           // PresentState = IDLE;
           // Error++;
-          printf("Error: Wrong Seq and corrupted\n");
+          printf("Error: Wrong Seq ACK and corrupted\n");
         } else {
           // do nothing
-          printf("Error: Wrong Seq and not corrupted\n");
+          printf("Error: Wrong Seq ACK and not corrupted\n");
         }
       }
     } else {
