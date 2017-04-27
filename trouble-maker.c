@@ -9,11 +9,20 @@
 
 const int MAX_DELAY_MS = 5000;
 
-void *sender_thread(void *arg) {
-  int delay = rand_lim(MAX_DELAY_MS);
-  printf("[[ CHANNEL: The frame is expected to be sent in %d ms ]]\n", delay);
-  usleep(delay * 1000);
-  printf("Thread died\n");
+struct send_data { // used for passing into thread function
+  int sockfile;
+  short frame;
+  int delay;
+};
+
+void *timed_send(void *arg);
+
+void *timed_send(void *arg) {
+  struct send_data *data = (struct send_data*) arg;
+  usleep(data->delay * 1000);
+  send(data->sockfile, &data->frame, 2, 0);
+  printf(" [[ CHANNEL: The frame is sent ]]\n");
+  free(data);
 }
 
 short corrupt(short frame) {
@@ -30,10 +39,14 @@ void mightsend(int sockfile, short frame) {
       frame = corrupt(frame);
       printf("\t[[ CHANNEL: The frame is CORRUPTED ]]\n");
     }
+    random = rand_lim(MAX_DELAY_MS);
+    struct send_data *data = (struct send_data*) malloc(sizeof(struct send_data));
+    data->sockfile = sockfile;
+    data->frame = frame;
+    data->delay = random;
+    printf("[[ CHANNEL: The frame is expected to be sent in %d ms ]]\n", random);
     pthread_t pt;
-    pthread_create(&pt, NULL, sender_thread, NULL);
-    send(sockfile, &frame, 2, 0);
-    printf(" [[ CHANNEL: The frame is sent ]]\n");
+    pthread_create(&pt, NULL, timed_send, data);
   } else {
     printf("\t[[ CHANNEL: The frame is LOST ]]\n");
   }

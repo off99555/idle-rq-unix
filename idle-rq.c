@@ -83,7 +83,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
       if (P0) {
         if (P1) {
           // TODO: Stop_timer; (in our implementation, we won't do anything)
-          printf("Timer Stopped: Valid ACK N(S)=N(R) is received.\n");
+          printf("Timer Stopped: Valid ACK N(S)=N(R)=%d is received.\n", NR);
           // State=IDLE (in our implementation, go send another frame immediately)
           continue;
         } else {
