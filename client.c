@@ -5,8 +5,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include "idle-rq.h"
 #include <time.h>
+#include <sys/wait.h>
+#include "idle-rq.h"
 
 #define PORT 5104
 #define ADDRESS "127.0.0.1" // IP cil.informatics = 10.16.64.39
@@ -16,29 +17,50 @@
 #define MAX_FILE_SIZE 10000
 
 int main(void) {
+  char content[MAX_FILE_SIZE];
+  content[0] = 0;
+
+  int pipefd[2];
+  pid_t cpid;
+  pipe(pipefd); // create the pipe
+  cpid = fork(); // duplicate the current process
+  if (cpid == 0) // if I am the child then
+  {
+    char buf;
+    close(pipefd[1]); // close the write-end of the pipe, I'm not going to use it
+    while (read(pipefd[0], &buf, 1) > 0) // read until EOF
+      strcat(content, &buf);
+    close(pipefd[0]); // close the read-end of the pipe
+  }
+  else // if I am the parent then
+  {
+    // read file
+    FILE *file = fopen(INFILENAME, "r");
+    if (file == NULL) {
+      fprintf(stderr, "Error: Cannot open file \"%s\"\n", INFILENAME);
+      return EXIT_FAILURE;
+    }
+    char line[MAX_LINE_WIDTH];
+    while (fgets(line, MAX_LINE_WIDTH, file) != NULL) {
+      strcat(content, line);
+    }
+    printf("File read: %s\n", INFILENAME);
+    if (fclose(file) == EOF) {
+      fprintf(stderr, "Error: Cannot close the file\n");
+      return EXIT_FAILURE;
+    }
+    close(pipefd[0]); // close the read-end of the pipe, I'm not going to use it
+    write(pipefd[1], content, strlen(content)); // send the content to the reader
+    close(pipefd[1]); // close the write-end of the pipe, thus sending EOF to the reader
+    wait(NULL); // wait for the child process to exit before I do the same
+    exit(EXIT_SUCCESS);
+  }
+
   srand(time(NULL));
   // socket - create an endpoint for communication
   int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_desc == -1) {
     fprintf(stderr, "Error: Cannot create a socket\n");
-    return EXIT_FAILURE;
-  }
-
-  // read file
-  FILE *file = fopen(INFILENAME, "r");
-  if (file == NULL) {
-    fprintf(stderr, "Error: Cannot open file \"%s\"\n", INFILENAME);
-    return EXIT_FAILURE;
-  }
-  char line[MAX_LINE_WIDTH];
-  char content[MAX_FILE_SIZE];
-  content[0] = 0;
-  while (fgets(line, MAX_LINE_WIDTH, file) != NULL) {
-    strcat(content, line);
-  }
-  printf("File read: %s\n", INFILENAME);
-  if (fclose(file) == EOF) {
-    fprintf(stderr, "Error: Cannot close the file\n");
     return EXIT_FAILURE;
   }
 

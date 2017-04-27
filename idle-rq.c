@@ -57,7 +57,7 @@ ssize_t mysend(int sockfile, const void *buf, size_t len, int flags) {
 
     // PresentState = WTACK: wait for Secondary to respond
     short ack; // we prefer ACK_BIT bit to mean ACK, if it's 1 or NAK if 0
-    printf("Waiting for an ACK frame ...\n");
+    printf("Timer Started: Waiting for an ACK frame ...\n");
     ssize_t status = recv(sockfile, &ack, 2, 0); // receiving the ACK frame
     // TODO: TEXP: if time expire do RetxFrame; Start_timer; PresentState=WTACK;
 
